@@ -52,10 +52,10 @@ La web solo **lee** tus eventos (permiso `calendar.readonly`): no puede crear, c
 
 ### 1. Registrar la app en Google Cloud (una sola vez)
 
-1. Entra en <https://console.cloud.google.com/> con tu cuenta de Google y crea un proyecto nuevo llamado `Hoy`.
+1. Entra en <https://console.cloud.google.com/> con tu cuenta de Google y crea un proyecto nuevo (el mío se llama `organizador`).
 2. Menú → **APIs y servicios → Biblioteca** → busca **Google Calendar API** → **Habilitar**.
 3. Menú → **Google Auth Platform** (o "Pantalla de consentimiento de OAuth") → **Comenzar**:
-   - Nombre de la app: `Hoy`. Correo de asistencia: el tuyo.
+   - Nombre de la app: `organizador`. Correo de asistencia: el tuyo.
    - Público: **Externo**. Correo de contacto: el tuyo. Acepta y **Crear**.
 4. En **Público** (Audience) → **Usuarios de prueba** → **Añadir usuarios** → tu Gmail. La app se queda en modo "Prueba": es lo correcto para uso personal.
 5. En **Clientes** → **Crear cliente**:
