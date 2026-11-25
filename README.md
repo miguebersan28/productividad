@@ -17,7 +17,9 @@ Panel para organizar el día en una pantalla secundaria: tareas con prioridad, P
 **Atajos de teclado:** `Espacio` empezar/pausar · `N` nueva tarea · `F` modo foco · `Esc` salir.
 En una tarea seleccionada con `Tab`: `Enter` ponerla en curso · `Espacio` completar · `Alt+↑/↓` moverla · `Supr` borrar.
 
-**Racha:** suma un día cuando completas todas las tareas de prioridad alta de ese día. Un día sin tareas altas ni suma ni la rompe. Las atrasadas completadas no cuentan.
+**Rutina y recados:** el widget *Rutina* enseña lo que estás haciendo y lo siguiente de tu rutina de hoy. Púlsalo para ver el día completo (o cualquier día de la semana), tachar lo que ya hiciste (se desmarca solo al día siguiente), añadir o quitar actividades con su hora y sus días, y apuntar recados sueltos.
+
+**Racha** (la pastilla 🔥 junto a *Hoy*; pasa el ratón para ver la semana): suma un día cuando completas todas las tareas de prioridad alta de ese día. Un día sin tareas altas ni suma ni la rompe. Las atrasadas completadas no cuentan.
 
 ## Dónde se guardan los datos
 

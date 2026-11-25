@@ -6,6 +6,7 @@ import { segmented } from './ui.js';
 import { reduceMotion } from './spring.js';
 import { initCalendar, renderCalendar, refresh as refreshCalendar } from './calendar.js';
 import { initClassroom } from './classroom.js';
+import { initRoutine, renderRoutine } from './routine.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -57,22 +58,23 @@ function renderFocus() {
 function renderStreak() {
   const { count, todayRes } = S.streakView();
   $('#streakN').textContent = count;
-  $('#streakUnit').textContent = count === 1 ? 'día' : 'días';
+  $('#streakTitle').textContent = `${count} ${count === 1 ? 'día' : 'días'} de racha`;
+  $('#streakPill').classList.toggle('hot', todayRes === 'ok');
+  $('#streakPill').classList.toggle('cold', count === 0);
   const notes = {
-    ok: 'Hoy ya cuenta: todas las altas hechas',
-    fail: 'Completa las tareas !!! para sumar hoy',
-    none: 'Añade alguna tarea !!! para sumar hoy',
+    ok: 'Hoy ya cuenta: todas las !!! hechas.',
+    fail: 'Completa las tareas !!! para sumar hoy.',
+    none: 'Añade alguna tarea !!! para sumar hoy.',
   };
   $('#streakNote').textContent = notes[todayRes];
+  $('#streakPill').setAttribute('aria-label', `Racha: ${count} ${count === 1 ? 'día' : 'días'}. ${notes[todayRes]}`);
   // Últimos 7 días (el último es hoy)
   const bars = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i);
     const ds = S.dayStr(d);
     const res = i === 0 ? (todayRes === 'ok' ? 'ok' : 'today') : S.state.streak.history[ds] || 'none';
-    const name = d.toLocaleDateString('es-ES', { weekday: 'long' });
-    const txt = { ok: 'conseguido', fail: 'no conseguido', none: 'no contaba', today: 'en curso' }[res];
-    bars.push(`<i class="${res}" title="${name}: ${txt}"></i>`);
+    bars.push(`<i class="${res}"></i>`);
   }
   $('#streakWeek').innerHTML = bars.join('');
 }
@@ -106,6 +108,7 @@ function renderAll(opts = {}) {
   renderStreak();
   renderTimer(true);
   renderCalendar();
+  renderRoutine();
 }
 
 S.rollover();
@@ -115,6 +118,7 @@ initTasks();
 initTimer();
 initCalendar();
 initClassroom();
+initRoutine();
 segmented($('#prioSeg'));
 renderClock();
 renderAll();

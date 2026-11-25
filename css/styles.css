@@ -437,3 +437,82 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; }
 #calSheetEvTitle { margin-top: .25rem; }
 .cr-actions { display: flex; flex-wrap: wrap; gap: .375rem; padding-bottom: .25rem; }
 .cr-status { padding-top: 0; }
+
+/* ---------- racha: pastilla junto a "Hoy" ---------- */
+.lc-head { gap: .625rem; }
+.lc-head .c { margin-left: auto; }
+.streak-pill {
+  position: relative; appearance: none; border: 0; cursor: default; align-self: center;
+  display: inline-flex; align-items: center; gap: .25rem; height: 1.75rem; padding: 0 .625rem 0 .5rem; border-radius: 999px;
+  background: rgba(255,159,10,.14); color: var(--orange); font-size: .9375rem; font-weight: 700;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+.streak-pill svg { width: 1rem; height: 1rem; }
+.streak-pill.hot { background: var(--orange); color: #000; }
+.streak-pill.cold { background: var(--fill-2); color: var(--label-3); }
+.streak-pop {
+  position: absolute; left: 0; top: calc(100% + .5rem); z-index: 5; width: 15rem; padding: .75rem .875rem; border-radius: 1rem; text-align: left;
+  display: flex; flex-direction: column; gap: .5rem; color: var(--label); font-size: .8125rem; font-weight: 500; cursor: default;
+  background: rgba(44,44,46,.9); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 14px 36px rgba(0,0,0,.5);
+  transform-origin: 1rem 0; opacity: 0; scale: .96; filter: blur(4px); visibility: hidden; pointer-events: none;
+  transition: opacity 150ms ease, scale 180ms var(--ease-out), filter 150ms ease, visibility 0s 180ms;
+}
+.streak-pill:hover .streak-pop, .streak-pill:focus-visible .streak-pop {
+  opacity: 1; scale: 1; filter: none; visibility: visible; transition: opacity 180ms ease, scale 260ms var(--spring), filter 180ms ease, visibility 0s;
+}
+.streak-pop b { font-size: .9375rem; }
+.streak-pop .wk { margin-top: 0; }
+.streak-pop .note { color: var(--label-2); font-weight: 400; }
+
+/* ---------- rutina ---------- */
+.w.routine { position: relative; min-width: 0; }
+.rt-body { cursor: pointer; border-radius: .75rem; margin-inline: -.5rem; padding-inline: .5rem; transition: background-color 160ms ease, scale 300ms var(--spring); }
+@media (hover: hover) { .rt-body:hover { background: rgba(255,255,255,.04); } .rt-body:hover .cal-foot { color: var(--label-2); } }
+.rt-body:active { scale: .985; transition: scale 90ms var(--ease-out); }
+.rt-dot { background: var(--green); }
+.rt-mini .ev.live .rt-dot { box-shadow: 0 0 0 3px rgba(48,209,88,.25); }
+.dotsep { margin: 0 .25rem; }
+.rt-errands { color: var(--label-2); font-weight: 600; }
+.rt-sheet { left: 0; right: auto; transform-origin: 0 100%; width: max(100%, 24rem); max-height: min(40rem, 80vh); }
+.rt-tabs { display: flex; gap: .25rem; margin: .125rem 0 .625rem; }
+.rt-tabs button, .rt-fdays button {
+  appearance: none; border: 0; cursor: pointer; flex: 1; height: 2rem; border-radius: .5rem; background: var(--fill-2); color: var(--label-2);
+  font-size: .8125rem; font-weight: 700; transition: background-color 160ms ease, color 160ms ease, scale 300ms var(--spring);
+}
+.rt-tabs button:active, .rt-fdays button:active { scale: .9; transition: scale 90ms var(--ease-out); }
+.rt-tabs button.today { box-shadow: inset 0 0 0 1.5px rgba(48,209,88,.6); }
+.rt-tabs button.on, .rt-fdays button.on { background: var(--green); color: #000; }
+@media (hover: hover) { .rt-tabs button:not(.on):hover, .rt-fdays button:not(.on):hover { background: var(--fill); color: var(--label); } }
+.rts { list-style: none; padding: 0; }
+.rt { display: flex; align-items: center; gap: .625rem; min-height: 2.75rem; font-size: .9375rem; min-width: 0; }
+.rt + .rt { box-shadow: inset 0 .5px 0 var(--sep); }
+.rt .et { font-variant-numeric: tabular-nums; color: var(--label-2); font-size: .8125rem; min-width: 5.75rem; white-space: nowrap; }
+.rt .en { flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+.rt-days { font-size: .75rem; color: var(--label-3); white-space: nowrap; }
+.rt.done .en, .rt.past .en { color: var(--label-3); }
+.rt.done .en { text-decoration: line-through; text-decoration-color: var(--label-3); }
+.rt.live .en { font-weight: 700; }
+.rt-chk[aria-pressed="true"] { background: var(--green); box-shadow: none; }
+.rt-chk[aria-pressed="true"]::after { content: ""; position: absolute; left: .32rem; top: .14rem; width: .25rem; height: .5rem; border: solid #000; border-width: 0 2px 2px 0; rotate: 45deg; }
+.rt .del { opacity: 0; width: 1.875rem; height: 1.875rem; }
+@media (hover: hover) { .rt:hover .del { opacity: 1; } }
+@media (hover: none) { .rt .del { opacity: .7; } }
+.rt:focus-within .del { opacity: 1; }
+.rt-add { display: flex; flex-direction: column; gap: .5rem; margin: .75rem 0 1rem; padding: .75rem; border-radius: .875rem; background: var(--fill-2); }
+.rt-add .hide-input { background: var(--fill); }
+.rt-row { display: flex; align-items: center; gap: .375rem; flex-wrap: wrap; }
+.rt-time { height: 2.125rem; border: 0; border-radius: .5rem; padding: 0 .5rem; background: var(--fill); color: var(--label); font: 500 .875rem var(--font); color-scheme: dark; }
+.rt-time:focus { outline: none; box-shadow: inset 0 0 0 1.5px rgba(48,209,88,.7); }
+.rt-dash { color: var(--label-3); }
+.rt-opt { font-size: .75rem; color: var(--label-3); }
+.rt-fdays { display: flex; gap: .25rem; flex: 1; min-width: 12rem; }
+.rt-err { font-size: .8125rem; color: var(--orange); min-height: 0; }
+.rt-err:empty { display: none; }
+.rt-add .cal-connect { margin-top: 0; background: var(--green); }
+.rt-errands-h { margin-top: .25rem; }
+.rt-errand .cr-chk { border-radius: 50%; }
+#rtNewErrand { margin-top: .375rem; }
+.rt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rt-main .rt-days { line-height: 1.2; }
+.rt { padding-block: .25rem; }

@@ -28,6 +28,7 @@ const defaults = () => ({
     // Eventos que no se enseñan (tu horario de clase). Se cambian en los ajustes del widget.
     hidden: ['Mates', 'Geografía', 'Economía', 'Inglés', 'Filosofía', 'Historia de España', 'Lengua', 'Educación Física', 'Finanzas', 'Religión'],
   },
+  routine: { items: [], errands: [], checks: { day: null, ids: [] } },
   classroom: { connected: false, items: [], parsed: {}, done: [], fetchedAt: null, status: 'off', error: null, source: 'gmail' },
 });
 
@@ -35,7 +36,7 @@ function merge(base, saved) {
   // Mezcla lo guardado sobre los valores por defecto, para que una versión nueva
   // de la app con campos nuevos no se rompa al leer datos antiguos.
   const out = { ...base, ...saved };
-  for (const k of ['streak', 'settings', 'pomo', 'ui', 'gcal', 'classroom']) out[k] = { ...base[k], ...(saved[k] || {}) };
+  for (const k of ['streak', 'settings', 'pomo', 'ui', 'gcal', 'classroom', 'routine']) out[k] = { ...base[k], ...(saved[k] || {}) };
   if (!Array.isArray(out.tasks)) out.tasks = [];
   return out;
 }

@@ -29,6 +29,7 @@
   <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
 </svg>
 
@@ -80,7 +81,12 @@
     <div class="clock"><div class="t num" id="clock">--:--</div><div class="d"><b id="weekday"></b><span id="date"></span></div></div>
 
     <section class="list-card" aria-label="Tareas de hoy">
-      <div class="lc-head"><h2>Hoy</h2><span class="c num"><span id="count">0</span><span class="of"> / <span id="total">0</span></span></span></div>
+      <div class="lc-head"><h2>Hoy</h2>
+        <button type="button" class="streak-pill" id="streakPill" aria-describedby="streakPop">
+          <svg class="i"><use href="#i-flame"/></svg><span class="num" id="streakN">0</span>
+          <span class="streak-pop" id="streakPop" role="tooltip"><b id="streakTitle"></b><span class="wk" id="streakWeek"></span><span class="note" id="streakNote"></span></span>
+        </button>
+        <span class="c num"><span id="count">0</span><span class="of"> / <span id="total">0</span></span></span></div>
       <div class="dprog" role="progressbar" aria-label="Progreso del día" aria-valuemin="0" aria-valuemax="100"><div id="dprog"></div></div>
       <label class="add">
         <svg class="i"><use href="#i-plus"/></svg>
@@ -106,11 +112,29 @@
     </section>
 
     <div class="widgets">
-      <div class="w streak">
-        <div class="h" style="color:var(--orange)"><svg class="i"><use href="#i-flame"/></svg>Racha</div>
-        <div class="n num"><span id="streakN">0</span> <small id="streakUnit">días</small></div>
-        <div class="wk" id="streakWeek"></div>
-        <div class="note" id="streakNote"></div>
+      <div class="w routine">
+        <div class="h" style="color:var(--green)"><svg class="i"><use href="#i-clock"/></svg>Rutina</div>
+        <div class="cal-body rt-body" id="rtBody" tabindex="0" role="button" aria-label="Rutina de hoy. Pulsa para ver el día completo y editarla"></div>
+        <div class="cal-sheet rt-sheet" id="rtSheet" role="dialog" aria-label="Rutina y recados">
+          <div class="sheet-head"><b id="rtTitle">Rutina de hoy</b><button type="button" class="icon-btn" id="rtClose" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button></div>
+          <div class="rt-tabs" id="rtDayTabs" role="group" aria-label="Día de la semana"></div>
+          <div class="sheet-scroll">
+            <ul class="rts" id="rtList"></ul>
+            <div class="rt-add">
+              <input class="hide-input" id="rtNewTitle" placeholder="Nueva actividad (p. ej. Gimnasio)" maxlength="80" autocomplete="off" aria-label="Nombre de la actividad">
+              <div class="rt-row">
+                <input type="time" class="rt-time" id="rtNewStart" aria-label="Hora de inicio"><span class="rt-dash">–</span><input type="time" class="rt-time" id="rtNewEnd" aria-label="Hora de fin (opcional)">
+                <span class="rt-opt">fin opcional</span>
+              </div>
+              <div class="rt-row"><span class="rt-fdays" id="rtFormDays" role="group" aria-label="Días"></span><button type="button" class="mini" data-rt-preset="weekdays">L–V</button><button type="button" class="mini" data-rt-preset="all">Todos</button></div>
+              <p class="rt-err" id="rtFormErr" role="alert"></p>
+              <button type="button" class="cal-connect" id="rtAddBtn">Añadir a la rutina</button>
+            </div>
+            <div class="cr-h rt-errands-h">Recados</div>
+            <ul class="rts" id="rtErrands"></ul>
+            <input class="hide-input" id="rtNewErrand" placeholder="Nuevo recado y Enter" maxlength="120" autocomplete="off" aria-label="Nuevo recado">
+          </div>
+        </div>
       </div>
       <div class="w cal">
         <div class="h" style="color:var(--red)"><svg class="i"><use href="#i-cal"/></svg>Calendario
