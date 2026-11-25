@@ -77,12 +77,15 @@ En el widget **Calendario** pulsa **Conectar Google Calendar**. Google avisará 
 
 ## Conectar Google Classroom
 
-La web lee tus **entregas pendientes** de Classroom (solo lectura): las de hoy y mañana salen en el widget de calendario, y todas al abrirlo. Puedes marcarlas como hechas con un clic; las que entregas en Classroom desaparecen solas.
+La Junta no permite conectar apps externas a las cuentas del instituto (`@g.educaand.es`), así que la web **lee los avisos de Classroom que llegan a tu Gmail** ("Nueva tarea", "Se entrega mañana"…) y saca de cada uno la asignatura, el título, la fecha de entrega y el enlace.
 
-Classroom usa la **cuenta del instituto** (`@g.educaand.es`), así que tiene su propia conexión:
+- Las entregas de hoy y mañana salen en el widget de calendario; todas las pendientes, al abrirlo.
+- Se quedan hasta que las marcas como hechas (los correos no dicen si ya la entregaste).
+- Varios avisos de la misma tarea cuentan como una sola. Anuncios, materiales y comentarios se ignoran.
 
-1. En Google Cloud (proyecto `organizador`): **APIs y servicios → Biblioteca → Google Classroom API → Habilitar**.
-2. **Google Auth Platform → Público → Usuarios de prueba** → añade tu cuenta del instituto.
-3. En la web: engranaje del widget **Calendario → Conectar con la cuenta del instituto** y elige esa cuenta.
+Para conectarlo:
 
-Si Google dice que **el administrador ha bloqueado el acceso**, es la Junta, que no deja usar apps externas con cuentas de alumnos. En ese caso no hay nada que configurar por tu parte: la alternativa es leer los avisos de Classroom que llegan a tu Gmail.
+1. En Google Cloud (proyecto `organizador`): **APIs y servicios → Biblioteca → Gmail API → Habilitar**.
+2. En la web: engranaje del widget **Calendario → Conectar Gmail** y elige tu Gmail personal.
+
+El permiso es de **solo lectura** de tu correo. La web solo busca correos de `no-reply@classroom.google.com` y nada sale de tu navegador. Puedes retirarlo cuando quieras en <https://myaccount.google.com/connections>.

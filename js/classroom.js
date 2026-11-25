@@ -1,24 +1,23 @@
-// classroom.js — tus entregas de Google Classroom (solo lectura).
+// classroom.js — tus entregas de Google Classroom, leídas de los avisos que llegan a tu Gmail.
 //
-// Usa la cuenta del instituto (la que tiene Classroom), que puede ser distinta de la del calendario.
-// Por eso tiene su propio token. Pide dos permisos de solo lectura:
-//   - ver tus clases (cursos)
-//   - ver tus tareas y si las has entregado
+// Por qué así: la Junta no deja conectar apps externas a las cuentas del instituto, así que no
+// podemos preguntar a Classroom directamente. Pero Classroom te manda un correo con cada tarea
+// nueva ("Nueva tarea", "Se entrega mañana"…) a tu Gmail personal. Leemos esos correos (solo
+// lectura) y sacamos de cada uno: asignatura, título, fecha de entrega y enlace a la tarea.
 import * as S from './store.js';
 import { GOOGLE_CLIENT_ID } from './config.js';
 import { loadGis } from './calendar.js';
 import { toast } from './ui.js';
 
-const SCOPES = [
-  'https://www.googleapis.com/auth/classroom.courses.readonly',
-  'https://www.googleapis.com/auth/classroom.coursework.me.readonly',
-];
-const API = 'https://classroom.googleapis.com/v1';
+const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
+const API = 'https://gmail.googleapis.com/gmail/v1/users/me';
+// Avisos de Classroom de los últimos 3 meses, sin anuncios ni materiales (no son tareas).
+const QUERY = 'from:no-reply@classroom.google.com newer_than:90d -subject:anuncio -subject:material';
 const TOKEN_KEY = 'hoy.classroom.token';
 const C = () => S.state.classroom;
 const DAY = 86400000;
 
-/* ---------------- token (igual que el del calendario, pero aparte) ---------------- */
+/* ---------------- token (aparte del del calendario) ---------------- */
 let token = (() => { try { const t = JSON.parse(localStorage.getItem(TOKEN_KEY)); return t && t.exp > Date.now() ? t : null; } catch { return null; } })();
 function storeToken(t) {
   token = t;
@@ -42,24 +41,17 @@ function client() {
 }
 
 function onToken(resp) {
-  if (resp.error) {
-    // admin_policy_enforced / access_denied: el instituto no deja usar apps externas con su cuenta.
-    const blocked = /admin|policy|denied/i.test(resp.error + ' ' + (resp.error_description || ''));
-    setStatus(C().connected ? 'expired' : 'off', blocked
-      ? 'Tu cuenta del instituto no permite conectar esta app (lo decide el administrador). Plan B: leer los avisos de Classroom de tu Gmail.'
-      : 'Google no dio permiso para leer Classroom.');
-    return;
-  }
-  if (!google.accounts.oauth2.hasGrantedAllScopes(resp, ...SCOPES)) {
-    setStatus(C().connected ? 'expired' : 'off', 'Necesito los dos permisos (clases y tareas) para enseñar tus entregas.');
+  if (resp.error || !google.accounts.oauth2.hasGrantedAllScopes(resp, ...SCOPES)) {
+    setStatus(C().connected ? 'expired' : 'off', 'Sin el permiso de leer el correo no puedo encontrar los avisos de Classroom.');
     return;
   }
   storeToken({ value: resp.access_token, exp: Date.now() + (Number(resp.expires_in) - 60) * 1000 });
   C().connected = true;
+  C().error = null;
   refresh();
 }
 
-/** Desde un clic. Elige la cuenta del instituto en la ventana de Google. */
+/** Desde un clic. En la ventana de Google elige tu Gmail personal (donde llegan los avisos). */
 export function connect() {
   const c = client();
   if (!c) {
@@ -73,7 +65,7 @@ export function connect() {
 export function disconnect() {
   if (token && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(token.value, () => {});
   storeToken(null);
-  S.state.classroom = { ...C(), connected: false, items: [], fetchedAt: null, status: 'off', error: null };
+  S.state.classroom = { ...C(), connected: false, items: [], parsed: {}, fetchedAt: null, status: 'off', error: null };
   S.commit();
 }
 
@@ -83,11 +75,11 @@ function setStatus(status, error = null) {
   S.commit();
 }
 
-/* ---------------- pedir datos ---------------- */
+/* ---------------- leer los correos ---------------- */
 async function api(path) {
   const r = await fetch(API + path, { headers: { Authorization: `Bearer ${token.value}` } });
   if (!r.ok) {
-    const e = new Error('Classroom API ' + r.status);
+    const e = new Error('Gmail API ' + r.status);
     e.status = r.status;
     try { e.detail = (await r.json())?.error?.message || ''; } catch { e.detail = ''; }
     throw e;
@@ -95,14 +87,56 @@ async function api(path) {
   return r.json();
 }
 
-/** Classroom guarda la fecha y la hora de entrega en UTC. Sin hora → final de ese día. */
-function dueMs(w) {
-  if (!w.dueDate) return null;
-  const { year, month, day } = w.dueDate;
-  if (w.dueTime && (w.dueTime.hours != null || w.dueTime.minutes != null)) {
-    return Date.UTC(year, month - 1, day, w.dueTime.hours || 0, w.dueTime.minutes || 0);
-  }
-  return new Date(year, month - 1, day, 23, 59).getTime();
+/** Gmail manda el texto en base64 "de URL". Lo pasamos a texto normal respetando tildes y emojis. */
+function decode(data) {
+  const bin = atob(data.replace(/-/g, '+').replace(/_/g, '/'));
+  return new TextDecoder('utf-8').decode(Uint8Array.from(bin, (ch) => ch.charCodeAt(0)));
+}
+/** Un correo tiene varias "partes" (texto, HTML…). Buscamos la de texto plano. */
+function plainText(part) {
+  if (!part) return '';
+  if (part.mimeType === 'text/plain' && part.body?.data) return decode(part.body.data);
+  for (const p of part.parts || []) { const t = plainText(p); if (t) return t; }
+  return '';
+}
+
+const MONTHS = { ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5, jul: 6, ago: 7, sep: 8, sept: 8, oct: 9, nov: 10, dic: 11 };
+
+/** "Fecha de entrega: 27 nov" (o "27 nov 2027, 14:00") → milisegundos. El año se deduce de la fecha del correo. */
+function parseDue(line, mailDate) {
+  const m = line.match(/Fecha de entrega:\s*(\d{1,2})\s+(?:de\s+)?([a-zé]{3,4})[a-zé]*\.?(?:\s+(?:de\s+)?(\d{4}))?(?:,?\s*(\d{1,2}):(\d{2}))?/i);
+  if (!m) return null;
+  const month = MONTHS[m[2].toLowerCase().slice(0, 4)] ?? MONTHS[m[2].toLowerCase().slice(0, 3)];
+  if (month == null) return null;
+  const sent = new Date(mailDate);
+  let year = m[3] ? Number(m[3]) : sent.getFullYear();
+  const make = (y) => new Date(y, month, Number(m[1]), m[4] ? Number(m[4]) : 23, m[4] ? Number(m[5]) : 59).getTime();
+  // Un aviso de diciembre con entrega "10 ene" es del año siguiente.
+  if (!m[3] && make(year) < sent.getTime() - 60 * DAY) year++;
+  return make(year);
+}
+
+/** Saca la tarea de un aviso. Devuelve null si el correo no es de una tarea (comentarios, etc.). */
+export function parseMail(text, mailDate) {
+  const lines = text.split(/\r?\n/).map((l) => l.trim());
+  const courseIdx = lines.findIndex((l) => /classroom\.google\.com\/c\/[^/?&]+\?/.test(l));
+  const linkLine = lines.find((l) => /classroom\.google\.com\/c\/[^/]+\/a\/[^/?]+/.test(l));
+  if (courseIdx < 1 || !linkLine) return null;
+  const ids = linkLine.match(/classroom\.google\.com\/c\/([^/]+)\/a\/([^/?]+)/);
+  const rest = lines.slice(courseIdx + 1).filter(Boolean);
+  const kind = rest[0] || '';
+  if (/coment/i.test(kind)) return null; // comentarios privados: no son tareas nuevas
+  const title = rest[1];
+  if (!title || title.startsWith('<')) return null;
+  const dueLine = lines.find((l) => /^Fecha de entrega:/i.test(l));
+  return {
+    id: `${ids[1]}/${ids[2]}`,
+    title,
+    course: lines[courseIdx - 1],
+    link: linkLine.replace(/^<|>$/g, ''),
+    due: dueLine ? parseDue(dueLine, mailDate) : null,
+    created: mailDate,
+  };
 }
 
 let busy = false;
@@ -112,35 +146,28 @@ export async function refresh() {
   if (busy) return;
   busy = true;
   try {
-    const courses = (await api('/courses?studentId=me&courseStates=ACTIVE&pageSize=50')).courses || [];
-    const since = Date.now() - 14 * DAY;
-    // Cada asignatura en paralelo. Si una falla, las demás siguen.
-    const perCourse = await Promise.all(courses.map(async (c) => {
-      try {
-        const [cw, subs] = await Promise.all([
-          api(`/courses/${c.id}/courseWork?courseWorkStates=PUBLISHED&orderBy=updateTime%20desc&pageSize=50`),
-          api(`/courses/${c.id}/courseWork/-/studentSubmissions?userId=me&pageSize=100`),
-        ]);
-        const state = new Map((subs.studentSubmissions || []).map((s) => [s.courseWorkId, s.state]));
-        return (cw.courseWork || []).map((w) => ({
-          id: w.id,
-          title: (w.title || 'Tarea sin título').trim(),
-          course: c.name,
-          link: w.alternateLink,
-          due: dueMs(w),
-          created: Date.parse(w.creationTime) || 0,
-          turnedIn: ['TURNED_IN', 'RETURNED'].includes(state.get(w.id)),
-        }));
-      } catch (e) {
-        if (e.status === 401) throw e;
-        return [];
-      }
-    }));
-    // Nos quedamos con lo que no has entregado y es reciente: con fecha desde hace 2 semanas, o sin fecha y publicada hace menos de un mes.
-    C().items = perCourse.flat().filter((t) => !t.turnedIn && (t.due ? t.due >= since : t.created >= Date.now() - 30 * DAY));
-    // Las marcadas a mano que ya no aparecen se olvidan, para que la lista no crezca para siempre.
-    const ids = new Set(C().items.map((t) => t.id));
-    C().done = (C().done || []).filter((id) => ids.has(id));
+    const list = await api(`/messages?maxResults=150&q=${encodeURIComponent(QUERY)}`);
+    const ids = (list.messages || []).map((m) => m.id);
+    // Solo descargamos los correos que no habíamos leído ya (los demás están guardados).
+    const parsed = { ...(C().parsed || {}) };
+    const fresh = ids.filter((id) => !(id in parsed));
+    for (let i = 0; i < fresh.length; i += 10) { // de 10 en 10 para no saturar a Google
+      const batch = await Promise.all(fresh.slice(i, i + 10).map((id) => api(`/messages/${id}?format=full`).catch((e) => { if (e.status === 401) throw e; return null; })));
+      batch.forEach((msg, j) => { parsed[fresh[i + j]] = msg ? parseMail(plainText(msg.payload), Number(msg.internalDate)) : null; });
+    }
+    // Olvidamos los correos que ya no salen en la búsqueda (de hace más de 3 meses).
+    for (const id of Object.keys(parsed)) if (!ids.includes(id)) delete parsed[id];
+    C().parsed = parsed;
+    // Una misma tarea puede tener varios avisos ("Nueva tarea", "Se entrega mañana"): nos quedamos con el más reciente.
+    const byTask = new Map();
+    for (const t of Object.values(parsed)) {
+      if (!t) continue;
+      const prev = byTask.get(t.id);
+      if (!prev || t.created > prev.created) byTask.set(t.id, { ...t, due: t.due ?? prev?.due ?? null, created: Math.min(t.created, prev?.created ?? t.created) });
+    }
+    C().items = [...byTask.values()];
+    const keys = new Set(C().items.map((t) => t.id));
+    C().done = (C().done || []).filter((id) => keys.has(id));
     C().fetchedAt = Date.now();
     C().status = 'ok';
     C().error = null;
@@ -149,8 +176,8 @@ export async function refresh() {
     else if (e.status === 403) {
       C().status = 'error';
       C().error = /has not been used|disabled/i.test(e.detail)
-        ? 'Activa la Google Classroom API en Google Cloud (README).'
-        : 'Classroom ha rechazado la petición. Puede que tu instituto no lo permita.';
+        ? 'Activa la Gmail API en Google Cloud (README).'
+        : 'Google ha rechazado la petición al correo.';
     } else { C().status = 'error'; C().error = 'Sin conexión: enseño lo último que cargué.'; }
   } finally {
     busy = false;
@@ -160,20 +187,19 @@ export async function refresh() {
 
 /* ---------------- marcar como hecha ---------------- */
 export function markDone(id) {
-  const t = C().items.find((x) => x.id === id);
   C().done = [...new Set([...(C().done || []), id])];
   S.commit();
-  toast(`Entrega marcada como hecha`, 'Deshacer', () => {
+  toast('Entrega marcada como hecha', 'Deshacer', () => {
     C().done = (C().done || []).filter((x) => x !== id);
     S.commit();
   });
-  return t;
 }
 
 /* ---------------- pintar ---------------- */
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const startOfDay = (ms) => { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); };
 
+/** Pendientes: todo lo que no has marcado, por antiguo que sea. Primero las atrasadas, al final las sin fecha. */
 export function pending() {
   const done = new Set(C().done || []);
   return (C().items || []).filter((t) => !done.has(t.id))
@@ -205,8 +231,8 @@ function item(t, { course = false } = {}) {
 /** Para el widget: solo lo que se entrega hoy y mañana. */
 export function widgetHtml() {
   if (!isConnected()) return '';
-  const end = startOfDay(Date.now()) + 2 * DAY;
-  const list = pending().filter((t) => t.due && t.due >= startOfDay(Date.now()) && t.due < end);
+  const today = startOfDay(Date.now());
+  const list = pending().filter((t) => t.due && t.due >= today && t.due < today + 2 * DAY);
   if (!list.length) return '';
   return `<div class="cr-sec"><div class="cr-h">Entregas</div><ul class="crs">${list.map((t) => item(t)).join('')}</ul></div>`;
 }
@@ -216,10 +242,10 @@ export function sheetHtml() {
   if (!isConnected()) return '';
   const list = pending();
   let foot = '';
-  if (C().status === 'expired') foot = `<button type="button" class="cal-foot-btn" data-cr="connect">La sesión de Classroom caducó · Reconectar</button>`;
+  if (C().status === 'expired') foot = `<button type="button" class="cal-foot-btn" data-cr="connect">La sesión de Gmail caducó · Reconectar</button>`;
   else if (C().error) foot = `<span class="cal-err">${esc(C().error)}</span>`;
   return `<div class="cr-sec full"><div class="cr-h">Entregas pendientes de Classroom${list.length ? ` <span class="badge">${list.length}</span>` : ''}</div>
-    ${list.length ? `<ul class="crs">${list.map((t) => item(t, { course: true })).join('')}</ul>` : `<p class="cal-empty">Nada pendiente en Classroom.</p>`}
+    ${list.length ? `<ul class="crs">${list.map((t) => item(t, { course: true })).join('')}</ul>` : `<p class="cal-empty">${C().fetchedAt ? 'Nada pendiente en Classroom.' : 'Buscando avisos de Classroom…'}</p>`}
     ${foot ? `<div class="cal-foot">${foot}</div>` : ''}</div>`;
 }
 
@@ -227,20 +253,21 @@ export function sheetHtml() {
 export function settingsHtml() {
   const c = C();
   const st = c.error ? c.error
-    : !c.connected ? 'Sin conectar'
+    : !c.connected ? 'Lee los avisos de tareas que Classroom manda a tu Gmail.'
     : c.status === 'expired' ? 'Sesión caducada'
-    : c.fetchedAt ? `Conectado · actualizado a las ${new Date(c.fetchedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : 'Conectando…';
-  return `<div class="pop-title">Google Classroom</div>
-    <p class="pop-help cr-status"></p>
+    : c.fetchedAt ? `Conectado · actualizado a las ${new Date(c.fetchedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : 'Buscando avisos…';
+  return `<div class="pop-title">Google Classroom (vía Gmail)</div>
+    <p class="pop-help cr-status">${esc(st)}</p>
     <div class="cr-actions">${c.connected
       ? `<button type="button" class="mini" data-cr="connect">Actualizar</button><button type="button" class="mini" data-cr="disconnect">Desconectar</button>`
-      : `<button type="button" class="mini" data-cr="connect">Conectar con la cuenta del instituto</button>`}</div>`
-    .replace('<p class="pop-help cr-status"></p>', `<p class="pop-help cr-status">${esc(st)}</p>`);
+      : `<button type="button" class="mini" data-cr="connect">Conectar Gmail</button>`}</div>`;
 }
 
 /* ---------------- arranque ---------------- */
 export function initClassroom() {
   if (!S.state.classroom) return;
+  // Si venías de la versión que usaba la API de Classroom, empezamos de cero.
+  if (C().source !== 'gmail') { storeToken(null); S.state.classroom = { connected: false, items: [], parsed: {}, done: [], fetchedAt: null, status: 'off', error: null, source: 'gmail' }; S.save(); }
   document.addEventListener('click', (e) => {
     const done = e.target.closest('[data-cr-done]');
     if (done) { e.stopPropagation(); markDone(done.dataset.crDone); return; }

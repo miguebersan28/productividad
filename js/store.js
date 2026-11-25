@@ -28,7 +28,7 @@ const defaults = () => ({
     // Eventos que no se enseñan (tu horario de clase). Se cambian en los ajustes del widget.
     hidden: ['Mates', 'Geografía', 'Economía', 'Inglés', 'Filosofía', 'Historia de España', 'Lengua', 'Educación Física', 'Finanzas', 'Religión'],
   },
-  classroom: { connected: false, items: [], done: [], fetchedAt: null, status: 'off', error: null },
+  classroom: { connected: false, items: [], parsed: {}, done: [], fetchedAt: null, status: 'off', error: null, source: 'gmail' },
 });
 
 function merge(base, saved) {
