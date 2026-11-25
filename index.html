@@ -122,10 +122,17 @@
         <div class="cal-body" id="calBody" tabindex="0" aria-label="Eventos de hoy. Pulsa para ver el día completo"></div>
         <div class="cal-sheet" id="calSheet" role="dialog" aria-label="Todos los eventos de hoy">
           <div class="sheet-head"><b>Hoy en tu calendario</b><button type="button" class="icon-btn" id="calSheetClose" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button></div>
-          <ul class="evs full" id="calSheetList"></ul>
+          <div class="sheet-scroll">
+            <div id="crSheet"></div>
+            <div class="cr-h" id="calSheetEvTitle" hidden>Eventos de hoy</div>
+            <ul class="evs full" id="calSheetList"></ul>
+          </div>
           <div class="sheet-foot" id="calSheetFoot"></div>
         </div>
         <div class="pop cal-pop" id="calPop" role="dialog" aria-label="Elegir calendarios">
+          <div id="crSettings"></div>
+          <div class="pop-sep"></div>
+          <div id="calGoogleSection">
           <div class="pop-title">Calendarios que se muestran</div>
           <div id="calList"></div>
           <div class="pop-sep"></div>
@@ -133,7 +140,8 @@
           <div class="chips" id="hideChips"></div>
           <input class="hide-input" id="hideInput" placeholder="Añadir nombre y pulsar Enter" maxlength="80" autocomplete="off" aria-label="Nombre de evento a ocultar">
           <div class="pop-sep"></div>
-          <button type="button" class="mini danger" id="calDisconnect">Desconectar Google</button>
+          <button type="button" class="mini danger" id="calDisconnect">Desconectar Google Calendar</button>
+          </div>
         </div>
       </div>
     </div>

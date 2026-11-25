@@ -8,6 +8,7 @@
 // 4. Guardamos los eventos de hoy para seguir enseñándolos aunque el token caduque.
 import * as S from './store.js';
 import { GOOGLE_CLIENT_ID } from './config.js';
+import * as CR from './classroom.js';
 
 const SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 const API = 'https://www.googleapis.com/calendar/v3';
@@ -31,7 +32,7 @@ const hasToken = () => !!token && token.exp > Date.now() + 30_000;
 /* ---------------- Google Identity Services ---------------- */
 let gisPromise = null;
 let tokenClient = null;
-function loadGis() {
+export function loadGis() {
   if (gisPromise) return gisPromise;
   gisPromise = new Promise((resolve, reject) => {
     const s = document.createElement('script');
@@ -173,25 +174,27 @@ function evItem(e, now) {
 export function renderCalendar() {
   const body = $('#calBody');
   const g = G();
-  $('#calSync').hidden = !g.connected;
-  $('#calSettingsBtn').hidden = !g.connected;
+  $('#calSync').hidden = !g.connected && !CR.isConnected();
+  $('#calSettingsBtn').hidden = !configured();
   $('#calSync').classList.toggle('spin', busy);
   const now = Date.now();
   const loaded = g.day === S.today();
   const visible = visibleEvents();
   // En el widget solo lo que está pasando y lo que queda; lo terminado se ve al abrirlo.
   const upcoming = visible.filter((e) => e.allDay || e.end > now);
-  const canOpen = configured() && g.connected && loaded;
+  const canOpen = configured() && ((g.connected && loaded) || CR.isConnected());
+  const entregas = CR.widgetHtml(); // entregas de Classroom de hoy y mañana
   document.querySelector('.cal').classList.toggle('openable', canOpen);
 
   let html = '';
   if (!configured()) {
     html = `<p class="cal-empty">Falta el ID de cliente de Google. Sigue los pasos del README para conectarlo.</p>`;
   } else if (!g.connected) {
-    html = `<p class="cal-empty">Ve aquí tus eventos de hoy.</p><button type="button" class="cal-connect" data-cal="connect">Conectar Google Calendar</button>`;
+    html = entregas + `<p class="cal-empty">Ve aquí tus eventos de hoy.</p><button type="button" class="cal-connect" data-cal="connect">Conectar Google Calendar</button>`;
   } else {
-    if (upcoming.length) html = '<ul class="evs">' + upcoming.map((e) => evItem(e, now)).join('') + '</ul>';
-    else html = `<p class="cal-empty">${!loaded ? 'Pulsa actualizar para cargar los eventos de hoy.' : visible.length ? 'No queda nada más hoy.' : 'Nada en el calendario hoy.'}</p>`;
+    html = entregas;
+    if (upcoming.length) html += '<ul class="evs">' + upcoming.map((e) => evItem(e, now)).join('') + '</ul>';
+    else if (!entregas) html += `<p class="cal-empty">${!loaded ? 'Pulsa actualizar para cargar los eventos de hoy.' : visible.length ? 'No queda nada más hoy.' : 'Nada en el calendario hoy.'}</p>`;
     let foot = '';
     if (g.status === 'expired') foot = `<button type="button" class="cal-foot-btn" data-cal="connect">La sesión de Google caducó · Reconectar</button>`;
     else if (g.error) foot = `<span class="cal-err">${esc(g.error)}</span>`;
@@ -200,6 +203,7 @@ export function renderCalendar() {
   }
   if (body.innerHTML !== html) body.innerHTML = html;
   if ($('#calSheet').classList.contains('open')) renderSheet();
+  if ($('#calPop').classList.contains('open')) $('#crSettings').innerHTML = CR.settingsHtml();
   renderNextEvent();
 }
 
@@ -209,7 +213,10 @@ function renderSheet() {
   const now = Date.now();
   const visible = visibleEvents();
   const hiddenN = todayEvents().length - visible.length;
-  const html = visible.length ? visible.map((e) => evItem(e, now)).join('') : '<li class="cal-empty">Nada en el calendario hoy.</li>';
+  const cr = CR.sheetHtml();
+  if ($('#crSheet').innerHTML !== cr) $('#crSheet').innerHTML = cr;
+  $('#calSheetEvTitle').hidden = !cr || !g.connected;
+  const html = !g.connected ? '' : visible.length ? visible.map((e) => evItem(e, now)).join('') : '<li class="cal-empty">Nada en el calendario hoy.</li>';
   if ($('#calSheetList').innerHTML !== html) $('#calSheetList').innerHTML = html;
   const parts = [];
   if (hiddenN) parts.push(`${hiddenN} ${hiddenN === 1 ? 'evento oculto' : 'eventos ocultos'}`);
@@ -241,6 +248,7 @@ function renderNextEvent() {
 }
 
 function renderPicker() {
+  $('#crSettings').innerHTML = CR.settingsHtml();
   const list = $('#calList');
   list.innerHTML = '';
   for (const c of G().calendars) {
@@ -277,6 +285,7 @@ function openPicker(open) {
   pop.inert = !on;
   $('#calSettingsBtn').setAttribute('aria-expanded', on);
   if (on) { openSheet(false); renderPicker(); }
+  $('#calGoogleSection').hidden = !G().connected;
 }
 
 /* ---------------- arranque ---------------- */
@@ -289,13 +298,17 @@ export function initCalendar() {
   document.querySelector('.cal').addEventListener('click', (e) => {
     if (e.target.closest('[data-cal="connect"]')) return connect();
     // Pulsar el cuerpo del widget abre la vista completa del día.
+    if (e.target.closest('a,button')) return; // los botones y enlaces de dentro hacen lo suyo
     if (e.target.closest('#calBody') && document.querySelector('.cal').classList.contains('openable')) openSheet(true);
   });
   $('#calBody').addEventListener('keydown', (e) => {
     if ((e.key === 'Enter' || e.key === ' ') && e.target === $('#calBody') && document.querySelector('.cal').classList.contains('openable')) { e.preventDefault(); openSheet(true); }
   });
   $('#calSheetClose').addEventListener('click', (e) => { e.stopPropagation(); openSheet(false); });
-  $('#calSync').addEventListener('click', () => (hasToken() ? refresh() : connect()));
+  $('#calSync').addEventListener('click', () => {
+    if (G().connected) hasToken() ? refresh() : connect();
+    else if (CR.isConnected()) CR.hasToken() ? CR.refresh() : CR.connect();
+  });
   $('#calSettingsBtn').addEventListener('click', (e) => { e.stopPropagation(); openPicker(); });
   $('#calList').addEventListener('change', (e) => {
     const id = e.target.dataset.id;
@@ -326,7 +339,7 @@ export function initCalendar() {
   $('#calDisconnect').addEventListener('click', () => { openPicker(false); disconnect(); });
   document.addEventListener('pointerdown', (e) => {
     if (!e.target.closest('#calPop,#calSettingsBtn')) openPicker(false);
-    if (!e.target.closest('#calSheet,#calBody')) openSheet(false);
+    if (!e.target.closest('#calSheet,#calBody,#toast')) openSheet(false);
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { openPicker(false); openSheet(false); } });
 

@@ -74,3 +74,15 @@ En el widget **Calendario** pulsa **Conectar Google Calendar**. Google avisará 
 - Con el engranaje del widget eliges qué calendarios se muestran, qué eventos se ocultan por nombre (viene con tu horario de clase) o desconectas tu cuenta.
 - El widget enseña solo lo que está pasando y lo que queda. Púlsalo para ver el día completo, con lo terminado atenuado.
 - Cuando falta menos de 1 hora para un evento, aparece un aviso en la tarjeta grande.
+
+## Conectar Google Classroom
+
+La web lee tus **entregas pendientes** de Classroom (solo lectura): las de hoy y mañana salen en el widget de calendario, y todas al abrirlo. Puedes marcarlas como hechas con un clic; las que entregas en Classroom desaparecen solas.
+
+Classroom usa la **cuenta del instituto** (`@g.educaand.es`), así que tiene su propia conexión:
+
+1. En Google Cloud (proyecto `organizador`): **APIs y servicios → Biblioteca → Google Classroom API → Habilitar**.
+2. **Google Auth Platform → Público → Usuarios de prueba** → añade tu cuenta del instituto.
+3. En la web: engranaje del widget **Calendario → Conectar con la cuenta del instituto** y elige esa cuenta.
+
+Si Google dice que **el administrador ha bloqueado el acceso**, es la Junta, que no deja usar apps externas con cuentas de alumnos. En ese caso no hay nada que configurar por tu parte: la alternativa es leer los avisos de Classroom que llegan a tu Gmail.

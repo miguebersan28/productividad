@@ -5,6 +5,7 @@ import { renderTimer, initTimer, toggle as toggleTimer } from './timer.js';
 import { segmented } from './ui.js';
 import { reduceMotion } from './spring.js';
 import { initCalendar, renderCalendar, refresh as refreshCalendar } from './calendar.js';
+import { initClassroom } from './classroom.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -113,6 +114,7 @@ S.subscribe(renderAll);
 initTasks();
 initTimer();
 initCalendar();
+initClassroom();
 segmented($('#prioSeg'));
 renderClock();
 renderAll();

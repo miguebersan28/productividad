@@ -405,3 +405,35 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; }
   :root { --label-2: rgba(235,235,245,.85); --label-3: rgba(235,235,245,.62); --sep: rgba(255,255,255,.4); }
   .glass, .pop, .toast { background: #2c2c2e; backdrop-filter: none; box-shadow: 0 0 0 1px #fff; }
 }
+
+/* ---------- entregas de Classroom ---------- */
+.sheet-scroll { flex: 1; min-height: 0; overflow: auto; scrollbar-width: none; }
+.sheet-scroll::-webkit-scrollbar { display: none; }
+.sheet-scroll .evs.full { overflow: visible; }
+.cr-sec { margin-bottom: .375rem; }
+.cr-sec.full { margin-bottom: .875rem; }
+.cr-h { display: flex; align-items: center; gap: .375rem; font-size: .6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--label-3); padding: .125rem 0 .25rem; }
+.cr-h .badge { background: var(--fill); color: var(--label-2); border-radius: 999px; padding: 0 .4rem; letter-spacing: 0; }
+.crs { list-style: none; padding: 0; }
+.cr { display: flex; align-items: center; gap: .5rem; min-height: 1.875rem; font-size: .9375rem; min-width: 0; }
+.cr-sec.full .cr { min-height: 2.75rem; }
+.cr-sec.full .cr + .cr { box-shadow: inset 0 .5px 0 var(--sep); }
+.cr-chk {
+  appearance: none; border: 0; padding: 0; cursor: pointer; flex: none; position: relative; width: 1rem; height: 1rem; border-radius: .3rem;
+  box-shadow: inset 0 0 0 1.5px var(--label-3); background: transparent; transition: box-shadow 160ms ease, scale 300ms var(--spring), background-color 160ms ease;
+}
+.cr-chk::before { content: ""; position: absolute; inset: -.5rem; } /* zona de clic más grande */
+.cr-chk:active { scale: .82; transition: scale 90ms var(--ease-out); }
+@media (hover: hover) { .cr-chk:hover { box-shadow: inset 0 0 0 1.5px var(--green); background: rgba(48,209,88,.15); } }
+.cr-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cr-t { color: var(--label); text-decoration: none; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: .25rem; }
+@media (hover: hover) { .cr-t:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--label-3); } }
+.cr-c { font-size: .75rem; color: var(--label-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cr-d { flex: none; font-size: .75rem; font-weight: 600; color: var(--label-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cr-d.today { color: var(--orange); }
+.cr-d.late { color: var(--red); }
+.cr-d.none { color: var(--label-3); font-weight: 500; }
+.cr-sec + .evs { margin-top: .25rem; padding-top: .375rem; box-shadow: inset 0 .5px 0 var(--sep); }
+#calSheetEvTitle { margin-top: .25rem; }
+.cr-actions { display: flex; flex-wrap: wrap; gap: .375rem; padding-bottom: .25rem; }
+.cr-status { padding-top: 0; }
