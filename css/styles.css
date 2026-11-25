@@ -287,7 +287,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; }
 .cal-foot-btn { appearance: none; border: 0; background: none; padding: 0; cursor: pointer; font-size: .8125rem; font-weight: 600; color: var(--orange); text-align: left; }
 @media (hover: hover) { .cal-foot-btn:hover { text-decoration: underline; text-underline-offset: 3px; } }
 /* selector de calendarios: sale del botón de ajustes, hacia arriba */
-.cal-pop { left: auto; right: 0; bottom: calc(100% + .5rem); translate: none; width: min(20rem, calc(100vw - 2rem)); transform-origin: 100% 100%; }
+.cal-pop { left: auto; right: 0; bottom: calc(100% + .5rem); translate: none; max-height: min(36rem, 80vh); overflow: auto; width: min(23rem, calc(100vw - 2rem)); transform-origin: 100% 100%; }
 .pop-title { font-size: .8125rem; font-weight: 600; color: var(--label-2); text-transform: uppercase; letter-spacing: .03em; padding: .25rem 0 .375rem; }
 #calList { max-height: 14rem; overflow: auto; }
 .cal-opt { display: flex; align-items: center; gap: .625rem; min-height: 2.5rem; cursor: pointer; font-size: .9375rem; }
@@ -295,6 +295,43 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; }
 .cal-opt input { width: 1.125rem; height: 1.125rem; accent-color: var(--orange); margin: 0; cursor: pointer; }
 .cal-opt .cname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mini.danger { color: var(--red); width: 100%; height: 2.25rem; }
+
+/* el widget se puede "abrir": todo el cuerpo es pulsable */
+.cal.openable .cal-body { cursor: pointer; border-radius: .75rem; margin-inline: -.5rem; padding-inline: .5rem; transition: background-color 160ms ease, scale 300ms var(--spring); }
+@media (hover: hover) { .cal.openable .cal-body:hover { background: rgba(255,255,255,.04); } .cal.openable .cal-body:hover .cal-foot { color: var(--label-2); } }
+.cal.openable .cal-body:active { scale: .985; transition: scale 90ms var(--ease-out); }
+.cal-body:focus-visible { outline-offset: 2px; }
+.cal-foot { display: flex; align-items: center; gap: .25rem; transition: color 160ms ease; }
+.cal-foot svg { width: .875rem; height: .875rem; rotate: -90deg; }
+
+/* vista completa del día: crece desde el widget (mismo sitio por el que se va) */
+.cal-sheet {
+  position: absolute; right: 0; bottom: 0; z-index: 4; width: max(100%, 22rem); max-width: calc(100vw - 2rem); max-height: min(34rem, 70vh);
+  display: flex; flex-direction: column; padding: 1rem 1.125rem .875rem; border-radius: 1.5rem; transform-origin: 100% 100%;
+  background: rgba(44,44,46,.86); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 24px 60px rgba(0,0,0,.55);
+  opacity: 0; scale: .9; filter: blur(8px); visibility: hidden;
+  transition: opacity 180ms ease, scale 220ms var(--ease-out), filter 180ms ease, visibility 0s 220ms;
+}
+.cal-sheet.open { opacity: 1; scale: 1; filter: none; visibility: visible; transition: opacity 220ms ease, scale 380ms var(--spring), filter 220ms ease, visibility 0s; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+.sheet-head b { font-size: 1.0625rem; font-weight: 700; letter-spacing: -.015em; }
+.evs.full { max-height: none; flex: 1; min-height: 0; overflow: auto; mask-image: none; padding-bottom: 0; }
+.evs.full .ev { min-height: 2.25rem; font-size: 1rem; }
+.evs.full .ev + .ev { box-shadow: inset 0 .5px 0 var(--sep); }
+.sheet-foot { padding-top: .625rem; font-size: .75rem; color: var(--label-3); }
+.sheet-foot:empty { display: none; }
+
+/* nombres ocultos */
+.chips { display: flex; flex-wrap: wrap; gap: .375rem; padding: .125rem 0 .5rem; max-height: 13rem; overflow: auto; }
+.chip { display: inline-flex; align-items: center; gap: .125rem; height: 1.75rem; padding: 0 .125rem 0 .625rem; border-radius: 999px; background: var(--fill); font-size: .8125rem; font-weight: 500; }
+.chip button { appearance: none; border: 0; background: none; cursor: pointer; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: grid; place-items: center; color: var(--label-2); transition: background-color 160ms ease, color 160ms ease, scale 300ms var(--spring); }
+.chip button svg { width: .75rem; height: .75rem; }
+.chip button:active { scale: .85; transition: scale 90ms var(--ease-out); }
+@media (hover: hover) { .chip button:hover { background: rgba(255,69,58,.2); color: var(--red); } }
+.hide-input { width: 100%; height: 2.25rem; border: 0; outline: none; border-radius: .5rem; padding: 0 .75rem; background: var(--fill-2); color: var(--label); font: 400 .875rem var(--font); caret-color: var(--accent); transition: box-shadow 160ms ease; }
+.hide-input:focus { box-shadow: inset 0 0 0 1.5px rgba(255,159,10,.6); }
+.hide-input::placeholder { color: var(--label-3); }
 
 /* aviso del siguiente evento en la tarjeta grande */
 .next-ev {

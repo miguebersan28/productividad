@@ -29,6 +29,7 @@
   <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
 </svg>
 
 <main class="app">
@@ -118,10 +119,19 @@
             <button type="button" class="icon-btn" id="calSettingsBtn" aria-label="Elegir calendarios" aria-expanded="false" aria-controls="calPop" hidden><svg class="i"><use href="#i-sliders"/></svg></button>
           </span>
         </div>
-        <div class="cal-body" id="calBody"></div>
+        <div class="cal-body" id="calBody" tabindex="0" aria-label="Eventos de hoy. Pulsa para ver el día completo"></div>
+        <div class="cal-sheet" id="calSheet" role="dialog" aria-label="Todos los eventos de hoy">
+          <div class="sheet-head"><b>Hoy en tu calendario</b><button type="button" class="icon-btn" id="calSheetClose" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button></div>
+          <ul class="evs full" id="calSheetList"></ul>
+          <div class="sheet-foot" id="calSheetFoot"></div>
+        </div>
         <div class="pop cal-pop" id="calPop" role="dialog" aria-label="Elegir calendarios">
           <div class="pop-title">Calendarios que se muestran</div>
           <div id="calList"></div>
+          <div class="pop-sep"></div>
+          <div class="pop-title">Ocultar eventos que se llamen</div>
+          <div class="chips" id="hideChips"></div>
+          <input class="hide-input" id="hideInput" placeholder="Añadir nombre y pulsar Enter" maxlength="80" autocomplete="off" aria-label="Nombre de evento a ocultar">
           <div class="pop-sep"></div>
           <button type="button" class="mini danger" id="calDisconnect">Desconectar Google</button>
         </div>

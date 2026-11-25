@@ -71,5 +71,6 @@ En el widget **Calendario** pulsa **Conectar Google Calendar**. Google avisará 
 ### Cosas a saber
 
 - El permiso de Google dura **1 hora**. Después, los eventos de hoy se siguen viendo (están guardados), y para actualizar pulsas **Reconectar** o el botón ↻: un clic.
-- Con el engranaje del widget eliges qué calendarios se muestran o desconectas tu cuenta.
+- Con el engranaje del widget eliges qué calendarios se muestran, qué eventos se ocultan por nombre (viene con tu horario de clase) o desconectas tu cuenta.
+- El widget enseña solo lo que está pasando y lo que queda. Púlsalo para ver el día completo, con lo terminado atenuado.
 - Cuando falta menos de 1 hora para un evento, aparece un aviso en la tarjeta grande.

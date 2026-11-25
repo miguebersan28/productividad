@@ -23,7 +23,11 @@ const defaults = () => ({
   settings: { work: 25, short: 5, long: 15, every: 4, volume: 0.6 },
   pomo: { phase: 'work', cycle: 0, remaining: 25 * 60, endsAt: null },
   ui: { overdueOpen: true },
-  gcal: { connected: false, calendars: [], selected: null, events: [], fetchedAt: null, day: null, status: 'off', error: null },
+  gcal: {
+    connected: false, calendars: [], selected: null, events: [], fetchedAt: null, day: null, status: 'off', error: null,
+    // Eventos que no se enseñan (tu horario de clase). Se cambian en los ajustes del widget.
+    hidden: ['Mates', 'Geografía', 'Economía', 'Inglés', 'Filosofía', 'Historia de España', 'Lengua', 'Educación Física', 'Finanzas', 'Religión'],
+  },
 });
 
 function merge(base, saved) {
