@@ -370,26 +370,85 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; }
 @keyframes panelOut { to { opacity: 0; transform: translateX(10%); filter: blur(8px); } }
 @keyframes panelIn { from { opacity: 0; transform: translateX(10%); filter: blur(8px); } }
 
-/* ---------- pantallas verticales o estrechas: una columna ---------- */
-@media (max-aspect-ratio: 1/1), (max-width: 900px) {
+/* ==========================================================================
+   Tamaño de ventana
+   Nada se monta encima de nada: cada bloque mide el hueco que tiene (container queries)
+   y va quitando lo menos importante. El cronómetro y sus botones nunca se quitan.
+   ========================================================================== */
+.focus { container-name: focus; }
+.focus > * { flex-shrink: 0; } /* nada se aplasta: si no cabe, se quita */
+.side { container: side / size; }
+
+/* --- tarjeta del cronómetro: por alto --- */
+@container focus (max-height: 40rem) {
+  .next-ev { display: none; }
+  .focus h1 { -webkit-line-clamp: 2; }
+  .task-meta { margin-top: 1rem; }
+}
+@container focus (max-height: 31rem) {
+  .task-meta { display: none; }
+  .focus h1 { -webkit-line-clamp: 1; font-size: clamp(1.25rem, 3.2cqw, 2.25rem); margin-top: 1rem; }
+}
+@container focus (max-height: 16rem) {
+  .focus h1 { display: none; }
+  .digits { font-size: min(30cqw, 40cqh); }
+}
+@container focus (max-height: 11rem) {
+  .focus-head { display: none; }
+  .under { margin-top: .625rem; }
+  .digits { font-size: min(30cqw, 46cqh); }
+}
+/* --- tarjeta del cronómetro: por ancho --- */
+@container focus (max-width: 42rem) { .sess { display: none; } }
+@container focus (max-width: 34rem) {
+  #focusLbl, .gsep { display: none; }
+  .seg button { padding: 0 .625rem; }
+}
+@container focus (max-width: 27rem) {
+  #settingsBtn, #skipBtn, .under span { display: none; }
+}
+
+/* --- columna derecha: primero se van los widgets, luego el reloj; la lista es lo último --- */
+@container side (max-height: 46rem) { .clock .t { font-size: 5rem; } }
+@container side (max-height: 37rem) { .widgets { display: none; } }
+@container side (max-height: 27rem) { .clock { display: none; } }
+@container side (max-height: 19rem) { .dprog, .hint { display: none; } .list-card { padding-top: 1rem; } }
+@container side (max-width: 24rem) { .clock .t { font-size: 4.25rem; } .clock .d b { font-size: 1.125rem; } }
+@container side (max-width: 25rem) { .widgets { display: none; } } /* no caben de ancho: fuera antes que cortarlos */
+
+/* --- ventanas bajas: menos márgenes y botones algo más pequeños --- */
+@media (max-height: 560px) {
+  .app { padding: 1rem; gap: 1rem; }
+  .focus { padding: 1.25rem 2rem 6rem; }
+  .glass { bottom: 1rem; padding: .375rem; }
+  .gbtn { height: 3.25rem; min-width: 3.25rem; }
+  .pop { bottom: 5.25rem; }
+}
+
+/* --- una columna: ventanas estrechas o verticales --- */
+@media (max-width: 700px), (max-aspect-ratio: 4/5) {
   body { overflow: auto; }
   .app, body.focus-mode .app { height: auto; min-height: 100dvh; grid-template-columns: minmax(0,1fr); }
   .focus { height: min(60dvh, 46rem); }
   body.focus-mode .focus { height: calc(100dvh - 3.5rem); }
-  .side { grid-template-rows: auto auto auto; }
+  .side { container-type: inline-size; grid-template-rows: auto auto auto; }
   .scroller { overflow: visible; mask-image: none; }
+}
+/* --- una columna y además baja: solo queda el cronómetro, ocupándolo todo --- */
+@media (max-width: 700px) and (max-height: 640px), (max-aspect-ratio: 4/5) and (max-height: 640px) {
+  body { overflow: hidden; }
+  .app, body.focus-mode .app { height: 100dvh; min-height: 0; grid-template-rows: minmax(0,1fr); }
+  .focus, body.focus-mode .focus { height: auto; }
+  .side { display: none; }
 }
 @media (max-width: 640px) {
   .app { padding: 1rem; gap: 1rem; }
-  .focus { padding: 1.5rem 1.25rem 7rem; border-radius: 1.5rem; }
+  .focus { padding: 1.5rem 1.25rem 6.5rem; border-radius: 1.5rem; }
   .gbtn { height: 3.25rem; min-width: 3.25rem; padding: 0 .75rem; }
   .gbtn.play { min-width: 0; padding: 0 1.25rem; }
-  #focusLbl, .gsep { display: none; }
-  .clock .t { font-size: 4.5rem; }
   .widgets { grid-template-columns: 1fr; }
   .add .seg button { padding: 0 .5rem; }
-  .seg button { padding: 0 .75rem; }
-  .pop { bottom: 6rem; }
+  .pop { bottom: 5.75rem; }
   .toast { right: 1rem; left: 1rem; bottom: 1rem; justify-content: space-between; }
 }
 
