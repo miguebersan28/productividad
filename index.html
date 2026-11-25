@@ -46,6 +46,7 @@
     </div>
     <div class="task-meta" id="meta"></div>
     <h1 id="title"></h1>
+    <div class="next-ev" id="nextEv" role="status"><svg class="i"><use href="#i-cal"/></svg><span></span></div>
     <div class="digits" id="timer" role="timer" aria-live="off">25:00</div>
     <div class="under"><div class="track"><div id="tbar"></div></div><span id="timerNote"></span></div>
 
@@ -111,8 +112,19 @@
         <div class="note" id="streakNote"></div>
       </div>
       <div class="w cal">
-        <div class="h" style="color:var(--red)"><svg class="i"><use href="#i-cal"/></svg>Calendario</div>
-        <p class="cal-empty">Aquí verás tus eventos de Google Calendar cuando lo conectemos.</p>
+        <div class="h" style="color:var(--red)"><svg class="i"><use href="#i-cal"/></svg>Calendario
+          <span class="cal-actions">
+            <button type="button" class="icon-btn" id="calSync" aria-label="Actualizar eventos" hidden><svg class="i"><use href="#i-reset"/></svg></button>
+            <button type="button" class="icon-btn" id="calSettingsBtn" aria-label="Elegir calendarios" aria-expanded="false" aria-controls="calPop" hidden><svg class="i"><use href="#i-sliders"/></svg></button>
+          </span>
+        </div>
+        <div class="cal-body" id="calBody"></div>
+        <div class="pop cal-pop" id="calPop" role="dialog" aria-label="Elegir calendarios">
+          <div class="pop-title">Calendarios que se muestran</div>
+          <div id="calList"></div>
+          <div class="pop-sep"></div>
+          <button type="button" class="mini danger" id="calDisconnect">Desconectar Google</button>
+        </div>
       </div>
     </div>
   </aside>

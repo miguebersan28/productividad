@@ -4,6 +4,7 @@ import { renderTasks, initTasks, PRIO } from './tasks.js';
 import { renderTimer, initTimer, toggle as toggleTimer } from './timer.js';
 import { segmented } from './ui.js';
 import { reduceMotion } from './spring.js';
+import { initCalendar, renderCalendar, refresh as refreshCalendar } from './calendar.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -103,6 +104,7 @@ function renderAll(opts = {}) {
   renderFocus();
   renderStreak();
   renderTimer(true);
+  renderCalendar();
 }
 
 S.rollover();
@@ -110,13 +112,14 @@ S.save();
 S.subscribe(renderAll);
 initTasks();
 initTimer();
+initCalendar();
 segmented($('#prioSeg'));
 renderClock();
 renderAll();
 
 setInterval(() => {
   renderClock();
-  if (S.rollover()) S.commit(); // ha pasado la medianoche: día nuevo
+  if (S.rollover()) { S.commit(); refreshCalendar(); } // ha pasado la medianoche: día nuevo
 }, 1000);
 
 // Otra pestaña ha cambiado los datos → nos actualizamos.

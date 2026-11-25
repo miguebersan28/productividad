@@ -23,13 +23,14 @@ const defaults = () => ({
   settings: { work: 25, short: 5, long: 15, every: 4, volume: 0.6 },
   pomo: { phase: 'work', cycle: 0, remaining: 25 * 60, endsAt: null },
   ui: { overdueOpen: true },
+  gcal: { connected: false, calendars: [], selected: null, events: [], fetchedAt: null, day: null, status: 'off', error: null },
 });
 
 function merge(base, saved) {
   // Mezcla lo guardado sobre los valores por defecto, para que una versión nueva
   // de la app con campos nuevos no se rompa al leer datos antiguos.
   const out = { ...base, ...saved };
-  for (const k of ['streak', 'settings', 'pomo', 'ui']) out[k] = { ...base[k], ...(saved[k] || {}) };
+  for (const k of ['streak', 'settings', 'pomo', 'ui', 'gcal']) out[k] = { ...base[k], ...(saved[k] || {}) };
   if (!Array.isArray(out.tasks)) out.tasks = [];
   return out;
 }

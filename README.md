@@ -45,3 +45,31 @@ python -m http.server 8000
 ```
 
 y abre <http://localhost:8000>.
+
+## Conectar Google Calendar
+
+La web solo **lee** tus eventos (permiso `calendar.readonly`): no puede crear, cambiar ni borrar nada. Los eventos van de Google directamente a tu navegador.
+
+### 1. Registrar la app en Google Cloud (una sola vez)
+
+1. Entra en <https://console.cloud.google.com/> con tu cuenta de Google y crea un proyecto nuevo llamado `Hoy`.
+2. Menú → **APIs y servicios → Biblioteca** → busca **Google Calendar API** → **Habilitar**.
+3. Menú → **Google Auth Platform** (o "Pantalla de consentimiento de OAuth") → **Comenzar**:
+   - Nombre de la app: `Hoy`. Correo de asistencia: el tuyo.
+   - Público: **Externo**. Correo de contacto: el tuyo. Acepta y **Crear**.
+4. En **Público** (Audience) → **Usuarios de prueba** → **Añadir usuarios** → tu Gmail. La app se queda en modo "Prueba": es lo correcto para uso personal.
+5. En **Clientes** → **Crear cliente**:
+   - Tipo: **Aplicación web**. Nombre: `Hoy web`.
+   - **Orígenes autorizados de JavaScript**: `https://miguebersan28.github.io` y `http://localhost:8000`
+   - **Crear** y copia el **ID de cliente** (termina en `.apps.googleusercontent.com`).
+6. Pega ese ID en `js/config.js` (`GOOGLE_CLIENT_ID = '...'`).
+
+### 2. Conectar
+
+En el widget **Calendario** pulsa **Conectar Google Calendar**. Google avisará de que la app "no está verificada": es normal porque es tu propia app; pulsa **Continuar**.
+
+### Cosas a saber
+
+- El permiso de Google dura **1 hora**. Después, los eventos de hoy se siguen viendo (están guardados), y para actualizar pulsas **Reconectar** o el botón ↻: un clic.
+- Con el engranaje del widget eliges qué calendarios se muestran o desconectas tu cuenta.
+- Cuando falta menos de 1 hora para un evento, aparece un aviso en la tarjeta grande.
